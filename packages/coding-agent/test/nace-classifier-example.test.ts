@@ -22,6 +22,7 @@ describe("nace-classifier example", () => {
 	});
 
 	async function setup() {
+		vi.stubEnv("NACE_API_KEY", "");
 		const harness = await createHarness({ extensionFactories: [naceClassifier] });
 		harnesses.push(harness);
 		const runtime = harness.session.modelRuntime;
@@ -77,6 +78,89 @@ describe("nace-classifier example", () => {
 			confidence: 0.98,
 		});
 		expect(result.usage).toMatchObject({ input: 64, output: 9 });
+	});
+
+	it("maps bool, choice and score questions and sends images in order before the state", async () => {
+		const runtime = await setup();
+		const drex = runtime.getModelOfType("classifier", "nace", "drex-max-v1.1")!;
+		const bodies: Array<Record<string, unknown>> = [];
+		const result = await runtime.classify(
+			drex,
+			{
+				state: { ticket: "I was charged twice." },
+				images: [
+					{ type: "image", data: "cG5n", mimeType: "image/png" },
+					{ type: "image", data: "d2VicA==", mimeType: "image/webp" },
+				],
+				questions: {
+					refund: { type: "bool", instructions: "Refund?", criteria: { true: "Yes", false: "No" } },
+					category: context.questions.category,
+					upset: { type: "score", instructions: "How upset?", criteria: ["Calm", "Angry"] },
+				},
+			},
+			{
+				fetch: async (_input, init) => {
+					bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+					return Response.json({
+						answers: {
+							refund: { type: "noul", noul: 0.9, confidence: 0.9 },
+							category: {
+								type: "choice",
+								choice: "billing",
+								probabilities: { billing: 1, technical: 0 },
+								confidence: 1,
+							},
+							upset: {
+								type: "score",
+								score: 0.4,
+								legend: ["Calm", "Angry"],
+								probabilities: { "0": 0.6, "1": 0.4 },
+								confidence: 0.6,
+							},
+						},
+						usage: { input_tokens: 10, output_tokens: 1 },
+					});
+				},
+			},
+		);
+
+		expect(bodies[0]).toMatchObject({
+			model: "drex-max-v1.1",
+			images: ["data:image/png;base64,cG5n", "data:image/webp;base64,d2VicA=="],
+			questions: { refund: { type: "noul" }, category: { type: "choice" }, upset: { type: "score" } },
+		});
+		expect(result.answers.refund).toEqual({ type: "bool", probability: 0.9 });
+		expect(result.answers.upset).toEqual({ type: "score", score: 0.4, confidence: 0.6 });
+		expect(Object.keys(result.answers).sort()).toEqual(["category", "refund", "upset"]);
+		expect(result.usage?.cost.input).toBeCloseTo(10 * 0.03e-6, 12);
+	});
+
+	it("refuses images for the text-only model, reports a missing key, and surfaces Nace errors", async () => {
+		const runtime = await setup();
+		const text = runtime.getModelOfType("classifier", "nace", "drex-v2.0")!;
+		const image = { type: "image" as const, data: "cG5n", mimeType: "image/png" };
+		const fetch = vi.fn(async () =>
+			Response.json(
+				{ error: { type: "authentication_error", message: "Invalid API key" }, request_id: "req_failed" },
+				{ status: 401 },
+			),
+		);
+
+		const withImage = await runtime.classify(text, { ...context, images: [image] }, { fetch });
+		expect(withImage.errorMessage).toBe("Model nace/drex-v2.0 does not accept image input");
+		expect(fetch).not.toHaveBeenCalled();
+
+		const unauthorized = await runtime.classify(text, context, { fetch });
+		expect(unauthorized.stopReason).toBe("error");
+		expect(unauthorized.errorMessage).toContain("401");
+		expect(unauthorized.errorMessage).toContain("Invalid API key");
+		expect(unauthorized.errorMessage).toContain("req_failed");
+		expect(unauthorized.answers).toEqual({});
+
+		await runtime.removeRuntimeApiKey("nace");
+		const missing = await runtime.classify(text, context, { fetch });
+		expect(missing.stopReason).toBe("error");
+		expect(missing.errorMessage).toContain("not configured");
 	});
 
 	it("hides models the key may not use after discovery and keeps them when discovery is rejected", async () => {
