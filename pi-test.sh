@@ -66,6 +66,7 @@ if [[ "$NO_ENV" == "true" ]]; then
   unset KIMI_API_KEY
   unset META_API_KEY
   unset MOONSHOT_API_KEY
+  unset NACE_API_KEY
   unset NVIDIA_API_KEY
   unset QWEN_TOKEN_PLAN_API_KEY
   unset QWEN_TOKEN_PLAN_CN_API_KEY

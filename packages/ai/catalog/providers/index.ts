@@ -23,6 +23,7 @@ import minimaxCn from "./minimax-cn.ts";
 import mistral from "./mistral.ts";
 import moonshotai from "./moonshotai.ts";
 import moonshotaiCn from "./moonshotai-cn.ts";
+import nace from "./nace.ts";
 import nvidia from "./nvidia.ts";
 import openai from "./openai.ts";
 import openaiCodex from "./openai-codex.ts";
@@ -68,6 +69,7 @@ export const PROVIDERS: readonly ProviderDefinition[] = [
 	mistral,
 	moonshotaiCn,
 	moonshotai,
+	nace,
 	nvidia,
 	openaiCodex,
 	openai,
