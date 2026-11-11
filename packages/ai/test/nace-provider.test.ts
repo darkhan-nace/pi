@@ -65,6 +65,24 @@ describe("Nace classifier provider", () => {
 		expect(missing.sent).toEqual([]);
 	});
 
+	it.each(["drex-v2.0", "drex-max-v1.1", "drex-max-finance"])(
+		"sends %s requests under its own model id",
+		async (id) => {
+			const { result, sent } = await classify(id, context);
+			expect(result.stopReason).toBe("stop");
+			expect(sent).toHaveLength(1);
+			expect(sent[0]?.url).toBe("https://console.nace.ai/v1/systemone");
+			expect(sent[0]?.body.model).toBe(id);
+		},
+	);
+
+	it.each(["drex-max-v1.1", "drex-max-finance"])("sends images to %s as a list of data URLs", async (id) => {
+		const { result, sent } = await classify(id, { ...context, images: [image] });
+		expect(result.stopReason).toBe("stop");
+		expect(sent[0]?.body.model).toBe(id);
+		expect(sent[0]?.body.images).toEqual(["data:image/png;base64,AAAA"]);
+	});
+
 	it("sends images to Drex Max as a list of data URLs and refuses what Drex or Pi cannot take", async () => {
 		const { sent } = await classify("drex-max-v1.1", { ...context, images: [image, image] });
 		expect(sent[0]?.body.images).toEqual(Array(2).fill("data:image/png;base64,AAAA"));

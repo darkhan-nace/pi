@@ -8,6 +8,7 @@ const originalZaiCodingCnApiKey = process.env.ZAI_CODING_CN_API_KEY;
 const originalAnthropicAuthToken = process.env.ANTHROPIC_AUTH_TOKEN;
 const originalAnthropicOauthToken = process.env.ANTHROPIC_OAUTH_TOKEN;
 const originalAnthropicApiKey = process.env.ANTHROPIC_API_KEY;
+const originalNaceApiKey = process.env.NACE_API_KEY;
 
 afterEach(() => {
 	if (originalCopilotGitHubToken === undefined) {
@@ -50,6 +51,12 @@ afterEach(() => {
 		delete process.env.ANTHROPIC_API_KEY;
 	} else {
 		process.env.ANTHROPIC_API_KEY = originalAnthropicApiKey;
+	}
+
+	if (originalNaceApiKey === undefined) {
+		delete process.env.NACE_API_KEY;
+	} else {
+		process.env.NACE_API_KEY = originalNaceApiKey;
 	}
 });
 
@@ -112,5 +119,12 @@ describe("environment API keys", () => {
 		process.env.ANTHROPIC_API_KEY = "api-key";
 
 		expect(getEnvApiKey("anthropic")).toBe("api-key");
+	});
+
+	it("resolves Nace credentials from NACE_API_KEY", () => {
+		process.env.NACE_API_KEY = "nace-token";
+
+		expect(findEnvKeys("nace")).toEqual(["NACE_API_KEY"]);
+		expect(getEnvApiKey("nace")).toBe("nace-token");
 	});
 });

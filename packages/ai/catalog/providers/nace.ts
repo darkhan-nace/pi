@@ -2,7 +2,8 @@ import type { ClassifierModel } from "../../src/types.ts";
 import { defineProvider } from "../define.ts";
 
 // Drex serves System One at https://console.nace.ai/v1/systemone. Limits and price: https://console.nace.ai/docs/drex/reference/models
-// `contextWindow` is the input-token limit of a whole request. Drex Max takes images as an `images` list of data URLs.
+// `contextWindow` is the input-token limit of a whole request for Drex Max. For drex-v2.0 the same 262144 is the limit for the state plus
+// the longest question, and the state alone is limited to 131072. Drex Max takes images as an `images` list of data URLs.
 function drex(id: string, name: string, image: boolean): ClassifierModel<"typesafe-system-one"> {
 	return {
 		type: "classifier",
