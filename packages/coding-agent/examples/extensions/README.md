@@ -130,6 +130,7 @@ For isolation setup and limitations, see [Run Pi in an isolated environment](../
 |-----------|-------------|
 | `custom-provider-anthropic/` | Custom Anthropic provider with OAuth support and custom streaming implementation |
 | `custom-provider-gitlab-duo/` | GitLab Duo provider using pi-ai's built-in Anthropic/OpenAI streaming via proxy |
+| `nace-classifier.ts` | Registers Nace's Drex decision models as `nace` classifier models for `models.classify()` and codemode, for Pi versions without the built-in provider |
 | `jev-router.ts` | Virtual model via `registerVirtualModel` that plans on Codex Sol or Terra (picked by the Jev classifier) and switches to Luna after the first edit |
 
 ### External Dependencies
