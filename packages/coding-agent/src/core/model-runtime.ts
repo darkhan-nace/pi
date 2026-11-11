@@ -58,6 +58,7 @@ import {
 	type StreamOptions,
 } from "@earendil-works/pi-ai";
 import * as builtinProviderCatalog from "@earendil-works/pi-ai/providers/all";
+import { personalizeNaceCatalog } from "@earendil-works/pi-ai/providers/nace";
 import { personalizeOpenRouterCatalog } from "@earendil-works/pi-ai/providers/openrouter";
 import {
 	assertChatModel,
@@ -233,6 +234,15 @@ export class ModelRuntime implements Models {
 				return withPersonalizedCatalog(
 					provider,
 					personalizeOpenRouterCatalog,
+					options.catalogBaseUrl,
+					builtinModelDataGeneratedAt,
+				);
+			}
+			// Nace narrows the catalog to the models the user's key may use.
+			if (provider.id === "nace") {
+				return withPersonalizedCatalog(
+					provider,
+					personalizeNaceCatalog,
 					options.catalogBaseUrl,
 					builtinModelDataGeneratedAt,
 				);

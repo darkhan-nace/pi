@@ -98,6 +98,7 @@ export type KnownProvider =
 	| "openai-codex"
 	| "radius"
 	| "typesafe"
+	| "nace"
 	| "nvidia"
 	| "deepseek"
 	| "github-copilot"
