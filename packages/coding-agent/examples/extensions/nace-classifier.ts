@@ -190,7 +190,7 @@ async function classify(
 		const timeout = options.timeoutMs === undefined ? undefined : AbortSignal.timeout(options.timeoutMs);
 		const signal =
 			options.signal && timeout ? AbortSignal.any([options.signal, timeout]) : (options.signal ?? timeout);
-		const response = await (options.fetch ?? fetch)(new URL("systemone", model.baseUrl), {
+		const response = await (options.fetch ?? fetch)(new URL("systemone", `${model.baseUrl.replace(/\/+$/u, "")}/`), {
 			method: "POST",
 			headers: {
 				...Object.fromEntries(Object.entries(options.headers ?? {}).filter(([, value]) => value !== null)),

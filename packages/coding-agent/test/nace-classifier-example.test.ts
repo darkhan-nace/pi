@@ -80,6 +80,22 @@ describe("nace-classifier example", () => {
 		expect(result.usage).toMatchObject({ input: 64, output: 9 });
 	});
 
+	it("posts to /systemone under a base URL without a trailing slash", async () => {
+		const runtime = await setup();
+		const drex = {
+			...runtime.getModelOfType("classifier", "nace", "drex-latest")!,
+			baseUrl: "http://127.0.0.1:9/v1",
+		};
+		const urls: string[] = [];
+		await runtime.classify(drex, context, {
+			fetch: async (input) => {
+				urls.push(String(input));
+				return Response.json({ answers: {} });
+			},
+		});
+		expect(urls).toEqual(["http://127.0.0.1:9/v1/systemone"]);
+	});
+
 	it("maps bool, choice and score questions and sends images in order before the state", async () => {
 		const runtime = await setup();
 		const drex = runtime.getModelOfType("classifier", "nace", "drex-max-v1.1")!;
