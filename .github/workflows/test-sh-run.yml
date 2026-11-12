@@ -1,0 +1,49 @@
+name: test.sh on a clean runner
+
+on:
+  push:
+    branches: [ci/test-sh-run]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-sh:
+    name: ${{ matrix.os }} / ${{ matrix.ref.name }} / ${{ matrix.bun }} bun
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        ref:
+          - { name: branch, sha: e7d56f6d624b59cc8b0e348555fb8f53b3438cab }
+          - { name: base, sha: c492741ff0e859c4b507150a897e031db87a6a94 }
+        bun: [with, without]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - if: matrix.bun == 'with'
+        uses: oven-sh/setup-bun@v2
+
+      - if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fd-find ripgrep
+          sudo ln -s $(which fdfind) /usr/local/bin/fd
+
+      - if: runner.os == 'macOS'
+        run: brew install fd ripgrep
+
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm run build:daemon --workspace packages/env
+      - run: ./test.sh
